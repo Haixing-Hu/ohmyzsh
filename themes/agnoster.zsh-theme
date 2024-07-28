@@ -109,9 +109,22 @@ prompt_git() {
    if [[ "$(command git rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ]]; then
     repo_path=$(command git rev-parse --git-dir 2>/dev/null)
     dirty=$(parse_git_dirty)
+
     ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
     ref="◈ $(command git describe --exact-match --tags HEAD 2> /dev/null)" || \
     ref="➦ $(command git rev-parse --short HEAD 2> /dev/null)"
+
+    # added by starfish: append the tag to the branch name
+    local tag
+    if command git symbolic-ref HEAD &> /dev/null; then
+      tag=$(command git describe --exact-match --tags 2> /dev/null)
+      if [[ -n $tag ]]; then
+        tag=" ${tag}"
+      fi
+    else
+      tag=""
+    fi
+
     if [[ -n $dirty ]]; then
       prompt_segment yellow black
     else
@@ -148,7 +161,9 @@ prompt_git() {
     zstyle ':vcs_info:*' formats ' %u%c'
     zstyle ':vcs_info:*' actionformats ' %u%c'
     vcs_info
-    echo -n "${${ref:gs/%/%%}/refs\/heads\//$PL_BRANCH_CHAR }${vcs_info_msg_0_%% }${mode}"
+    # echo -n "${${ref:gs/%/%%}/refs\/heads\//$PL_BRANCH_CHAR }${vcs_info_msg_0_%% }${mode}"
+    # modified by starfish: append the tag to the branch name
+    echo -n "${${ref:gs/%/%%}/refs\/heads\//$PL_BRANCH_CHAR }${tag}${vcs_info_msg_0_%% }${mode}"
   fi
 }
 
@@ -217,7 +232,9 @@ prompt_hg() {
 
 # Dir: current working directory
 prompt_dir() {
-  prompt_segment blue $CURRENT_FG '%~'
+  # prompt_segment blue $CURRENT_FG '%~'
+  # only display the last level of the current directory
+  prompt_segment blue $CURRENT_FG '%1~'
 }
 
 # Virtualenv: current working virtualenv
